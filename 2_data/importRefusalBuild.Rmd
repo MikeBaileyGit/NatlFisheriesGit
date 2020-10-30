@@ -1,0 +1,96 @@
+---
+title: "Import Rejection Consolidation"
+author: "Vince Egalla"
+date: "10/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Dependencies
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(plyr)
+library(dplyr)
+```
+
+## Load Data
+
+```{r}
+## FDA
+fda = read_csv("FDA/Import_Refusal_2014-present/REFUSAL_ENTRY_2014-September2020.CSV")
+```
+
+```{r}
+## USDA - Archived
+usdaArchived = read_excel("USDA/import-refusals-archived.xlsx", skip= 2)
+```
+
+```{r}
+## USDA - Current
+usdaCurrent = read_excel("USDA/import-refusals-current.xlsx", skip= 2)
+```
+
+```{r}
+## Vertical join of USDA Archived & Current
+usda = rbind(usdaCurrent, usdaArchived)
+```
+
+```{r}
+## Check for duplicates after row bind of Archived & Current
+usda[duplicated(usda),]
+```
+```{r}
+## Check column names
+colnames(usda)
+
+## Update column names
+names(usda)[names(usda) == "AppLot\r\nNumber"] = "app_lot_number"
+names(usda)[names(usda) == "Country"] = "country"
+names(usda)[names(usda) == "Received\r\nLot Date"] = "received_lot_date"
+names(usda)[names(usda) == "Export\r\nEstablishment"] = "export_establishment"
+names(usda)[names(usda) == "Company\r\nName"] = "company_name"
+names(usda)[names(usda) == "HACCP\r\nCode"] = "HACCP_code"
+names(usda)[names(usda) == "Product\r\nCategory"] = "product_category"
+names(usda)[names(usda) == "Species\r\nName"] = "species_name"
+names(usda)[names(usda) == "Final Weight\r\nRefused"] = "final_weight_refused"
+names(usda)[names(usda) == "Refusal\r\nReasons"] = "refusal_reasons"
+names(usda)[names(usda) == "Failed TOI"] = "failed_TOI"
+names(usda)[names(usda) == "Defect\r\nDescriptions"] = "defect_desc"
+```
+
+```{r}
+## Check updated names
+colnames(usda)
+```
+
+
+```{r}
+## FDA Product Description Frequency Table
+fdaProducts = as.data.frame(table(fda$PRDCT_CODE_DESC_TEXT))
+```
+
+```{r}
+## Check product categories given keyword searches
+fdaProducts[grepl("CATFISH", fdaProducts$Var1),]
+```
+
+```{r}
+## Check product categories given keyword searches
+fdaProducts[grepl("PANGASIUS", fdaProducts$Var1),]
+```
+
+```{r}
+## Check product categories given keyword searches
+fdaProducts[grepl("SILURIFORMES", fdaProducts$Var1),]
+```
+
+```{r}
+## USDA Species Category Description Frequency Table
+usdaProducts = as.data.frame(table(usda$species_name))
+```
+
