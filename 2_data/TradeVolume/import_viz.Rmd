@@ -151,15 +151,18 @@ dta_vietnam_season = dta_vietnam %>%
   summarise(season_volume = sum(volume_sum),
             season_value = sum(value_sum))
 
-dta_vietnam_season$dategroup = ymd(dta_vietnam_season$dategroup %m+% months(1))
+dta_vietnam_season$dategroup = ymd(dta_vietnam_season$dategroup %m+% months(2))
 
 dta_vietnam_season
+
+# dta_vietnam['volume_sum'] %>% slice(1:3) %>% sum()
 
 ```
 
 ```{r fig.width = 7, fig.height = 3, message = FALSE}
 
 ggplot(dta_vietnam_season,aes(dategroup, season_volume)) + 
+  geom_point(size=2) + 
   geom_path() + 
   geom_vline(xintercept = as.Date(c('2016-03-01','2019-11-05')),
              color='steelblue4', linetype='dashed') +
@@ -179,13 +182,128 @@ ggsave('figures/fig4.png',dpi=300)
 
 ```
 
+```{r tidy = FALSE, message = FALSE}
 
+dta_vietnam_halfyear = dta_vietnam
 
+dta_vietnam_halfyear$year_month_adjusted = ymd(as.Date(dta_vietnam_halfyear$year_month) %m-% months(2))
 
+dta_vietnam_halfyear = dta_vietnam_halfyear %>% 
+  mutate(dategroup = ceiling_date(year_month_adjusted, "6 months")) %>%
+  group_by(dategroup) %>%
+  summarise(halfyear_volume = sum(volume_sum),
+            halfyear_value = sum(value_sum))
 
+dta_vietnam_halfyear$dategroup = ymd(dta_vietnam_halfyear$dategroup %m+% months(2))
 
+dta_vietnam_halfyear
 
+# dta_vietnam['volume_sum'] %>% slice(1:6) %>% sum()
 
+```
+
+```{r fig.width = 7, fig.height = 3, message = FALSE}
+
+ggplot(dta_vietnam_halfyear,aes(dategroup, halfyear_volume)) + 
+  geom_point(size=2) + 
+  geom_path() + 
+  geom_vline(xintercept = as.Date(c('2016-03-01','2019-11-05')),
+             color='steelblue4', linetype='dashed') +
+  annotate('text', x = as.Date('2016-03-01'), y = 52000000,
+           label = ' March 2016:\n Inspection responsibility\n transferred from FDA to USDA',
+           size = 3, color = 'steelblue4', hjust = 0) +
+  annotate('text', x = as.Date('2019-11-05'), y = 52000000,
+           label = ' November 2019:\n USDA granted\n equivalence to\n Vietnam',
+           size = 3, color = 'steelblue4', hjust = 0) +
+  labs(title = 'Value of Catfish Imported from Vietnam by 6 Months from 2012 to 2020', 
+       x = 'Date', y = 'Value of Catfish Imported from Vietnam (USD)') + 
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  theme_bw() + 
+  theme(plot.title = element_text(face = 'bold'))
+
+ggsave('figures/fig5.png',dpi=300)
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+dta_vietnam_year = dta_vietnam
+
+dta_vietnam_year$year_month_adjusted = ymd(as.Date(dta_vietnam_year$year_month) %m-% months(2))
+
+dta_vietnam_year = dta_vietnam_year %>% 
+  mutate(dategroup = ceiling_date(year_month_adjusted, "1 year")) %>%
+  group_by(dategroup) %>%
+  summarise(year_volume = sum(volume_sum),
+            year_value = sum(value_sum))
+
+dta_vietnam_year$dategroup = ymd(dta_vietnam_year$dategroup %m+% months(2))
+
+dta_vietnam_year
+
+# dta_vietnam['volume_sum'] %>% slice(1:12) %>% sum()
+
+```
+
+```{r fig.width = 7, fig.height = 3, message = FALSE}
+
+ggplot(dta_vietnam_year,aes(dategroup, year_volume)) + 
+  geom_point(size=3) + 
+  geom_path() + 
+  geom_vline(xintercept = as.Date(c('2016-03-01','2019-11-05')),
+             color='steelblue4', linetype='dashed') +
+  annotate('text', x = as.Date('2016-03-01'), y = 102000000,
+           label = ' March 2016:\n Inspection responsibility\n transferred from FDA to USDA',
+           size = 3, color = 'steelblue4', hjust = 0) +
+  annotate('text', x = as.Date('2019-11-05'), y = 102000000,
+           label = ' November 2019:\n USDA granted\n equivalence to\n Vietnam',
+           size = 3, color = 'steelblue4', hjust = 0) +
+  labs(title = 'Value of Catfish Imported from Vietnam by Year from 2012 to 2020', 
+       x = 'Date', y = 'Value of Catfish Imported from Vietnam (USD)') + 
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  theme_bw() + 
+  theme(plot.title = element_text(face = 'bold'))
+
+ggsave('figures/fig6.png',dpi=300)
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+dta_china = dta %>% 
+  group_by(year_month, country_name) %>% 
+  summarise(volume_sum = sum(volume_kg),
+            value_sum = sum(value_USD)) %>% 
+  filter(country_name %in% c("CHINA"))
+
+dta_china
+
+```
+
+```{r fig.width = 7, fig.height = 3, message = FALSE}
+
+ggplot(dta_china,aes(year_month, volume_sum)) + 
+  geom_path() + 
+  geom_vline(xintercept = as.yearmon(c('Mar 2016','Nov 2019')), 
+             color='steelblue4', linetype='dashed') + 
+  annotate('text', x = as.yearmon('Mar 2016'), y = 1150000, 
+           label = ' March 2016:\n Inspection responsibility\n transferred from FDA to USDA', 
+           size = 3, color = 'steelblue4', hjust = 0) + 
+  annotate('text', x = as.yearmon('Nov 2019'), y = 1150000, 
+           label = ' November 2019:\n USDA granted\n equivalence to\n Vietnam', 
+           size = 3, color = 'steelblue4', hjust = 0) + 
+  labs(title = 'Volume of Catfish Imported from China by Month from 2012 to 2020', 
+       x = 'Date', y = 'Volume of Catfish Imported from China (kg)') + 
+  scale_x_yearmon(breaks = seq(from = min(dta_china$year_month), 
+                               to = as.yearmon('Mar 2020'),
+                               by = 0.25)) + 
+  theme_bw() + 
+  theme(plot.title = element_text(face = 'bold'), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+ggsave('figures/fig7.png',dpi=300)
+
+```
 
 
 
