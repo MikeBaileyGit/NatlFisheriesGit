@@ -1,0 +1,179 @@
+---
+title: "Import Rejection Consolidation"
+author: "Vince Egalla"
+date: "11/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Dependencies
+
+```{r}
+library(tidyverse)
+library(plyr)
+library(dplyr)
+library(countrycode)
+library(lubridate)
+library(ggplot2)
+#library(extrafont)
+#font_import()
+#library(tabulizer)
+```
+
+## Load Data
+```{r}
+load("output/build/compositeImportRefusal.Rdata")
+```
+
+
+```{r}
+## Aggregate refusals to a daily level
+daily = aggregate(composite$catfish, by=list(category= composite$date), FUN= sum)
+```
+
+```{r}
+## Create Year-Month variable for aggregation
+composite$month = format(as.Date(composite$date),"%Y-%m")
+
+## Aggregate refusals to a monthly level
+monthly = aggregate(composite$catfish, by=list(category= composite$month), FUN= sum)
+```
+
+## Visualize catfish refusals
+```{r fig.width= 7, fig.height= 3}
+## Daily refusals over time period
+ggplot(daily, aes(x= category, y= x)) +
+  geom_point() +
+  labs(x= "Year", y= "# Import Refusals of Catfish", title= "Catfish Import Refusals from January 2014 to September 2020 by Day") +
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
+
+ggsave("output/figures/refusals/dailyImportRefusalAllCountries.png")
+```
+
+```{r fig.width= 14, fig.height= 6}
+## Monthly refusals over time period
+ggplot(monthly, aes(x= category, y= x, group= 1)) +
+  geom_line() +
+  labs(x= "Year-Month", y= "# Import Refusals of Catfish", title= "Catfish Import Refusals from January 2014 to September 2020\nFor All Countries") +
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5)) +
+  ylim(0, 120) +
+  geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 120, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 120, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2019-11", linetype= "dashed", color= "darkred") + annotate("text", x= "2019-12", y= 120, color= "darkred", label= "November 2019\nVietnam gains FSIS\nequivalence", hjust= 0, vjust= 1)
+
+ggsave("output/figures/refusals/monthlyImportRefusalAllCountries.png")
+```
+```{r}
+## Countries listed
+compCountries = as.data.frame(table(composite$country))
+```
+
+```{r}
+## Aggregate refusals to a monthly level for Vietnam
+compVietnam = composite[composite$country=="VIETNAM",]
+
+monthlyVietnam = aggregate(compVietnam$catfish, by=list(category= compVietnam$month), FUN= sum)
+```
+
+```{r fig.width= 14, fig.height= 6}
+## Monthly refusals over time period (Vietnam)
+ggplot(monthlyVietnam, aes(x= category, y= x, group= 1)) +
+  geom_line() +
+  labs(x= "Year-Month", y= "# Import Refusals of Catfish", title= "Catfish Import Refusals from January 2014 to September 2020\nFor Vietnam") +
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5)) +
+  ylim(0, 120) +
+  geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 120, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 120, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2019-11", linetype= "dashed", color= "darkred") + annotate("text", x= "2019-12", y= 120, color= "darkred", label= "November 2019\nVietnam gains FSIS\nequivalence", hjust= 0, vjust= 1)
+
+ggsave("output/figures/refusals/monthlyImportRefusalVietnam.png")
+```
+
+```{r}
+## Aggregate refusals to a monthly level for China
+compChina = composite[composite$country=="CHINA",]
+  
+monthlyChina = aggregate(compChina$catfish, by=list(category= compChina$month), FUN= sum)
+```
+
+```{r fig.width= 14, fig.height= 6}
+## Monthly refusals over time period (China)
+ggplot(monthlyChina, aes(x= category, y= x, group= 1)) +
+  geom_line() +
+  labs(x= "Year-Month", y= "# Import Refusals of Catfish", title= "Catfish Import Refusals from January 2014 to September 2020\nFor China") +
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5)) +
+  ylim(0, 120) +
+  geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 120, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 120, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1)
+
+ggsave("output/figures/refusals/monthlyImportRefusalChina.png")
+```
+
+```{r}
+## Aggregate refusals to a monthly level for Thailand
+compThailand = composite[composite$country=="THAILAND",]
+  
+monthlyThailand = aggregate(compThailand$catfish, by=list(category= compThailand$month), FUN= sum)
+```
+
+```{r fig.width= 14, fig.height= 6}
+## Monthly refusals over time period
+ggplot(monthlyThailand, aes(x= category, y= x, group= 1)) +
+  geom_line() +
+  labs(x= "Year-Month", y= "# Import Refusals of Catfish", title= "Catfish Import Refusals from January 2014 to September 2020\nFor Thailand") +
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5)) +
+  ylim(0, 120) +
+  geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 120, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 120, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1)
+
+ggsave("output/figures/refusals/monthlyImportRefusalThailand.png")
+```
+
+```{r}
+## Aggregate refusals to a monthly level for Thailand
+compOther = composite[composite$country!="VIETNAM"&composite$country!="CHINA"&composite$country!="THAILAND",]
+  
+monthlyOther = aggregate(compOther$catfish, by=list(category= compOther$month), FUN= sum)
+```
+
+```{r}
+monthlyVietnam$country = "Vietnam"
+monthlyChina$country = "China"
+monthlyThailand$country = "Thailand"
+monthlyOther$country = "All Other Countries"
+
+## Merge all monthly data
+monthlyByCountryLong= Reduce(function(x, y) rbind(x, y), list(monthlyVietnam, monthlyChina, monthlyThailand, monthlyOther))
+
+monthlyByCountryLong$yearmon = as.numeric(parse_date_time(monthlyByCountryLong$category, orders= "ym"))
+class(monthlyByCountryLong$yearmon)
+```
+
+```{r fig.width= 14, fig.height= 6}
+## Monthly refusals over time period (Stacked Bar)
+ggplot(monthlyByCountryLong, aes(x= category, y= x, fill= country)) +
+  geom_bar(position= "stack", stat= "identity") +
+  labs(x= "Year-Month", y= "# Import Refusals of Catfish", title= "Catfish Import Refusals from January 2014 to September 2020\nBy Country", fill= "Country") +
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5)) +
+  ylim(0, 120)  +
+  geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 120, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 120, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1)
+
+ggsave("output/figures/refusals/monthlyImportRefusalByCountryBar.png")
+```
+
+
+```{r fig.width= 14, fig.height= 6}
+## Monthly refusals over time period (Area Attempt)
+ggplot(monthlyByCountryLong, aes(x= yearmon, y= x, fill= country)) +
+  geom_area(alpha= 0.5, color= 'black') +
+  labs(x= "Year-Month", y= "# Import Refusals of Catfish", title= "Catfish Import Refusals from January 2014 to September 2020\nBy Country", fill= "Country") +
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5)) +
+  ylim(0, 120)
+
+ggsave("output/figures/refusals/monthlyImportRefusalByCountryArea.png")
+```
+

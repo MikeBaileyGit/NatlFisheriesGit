@@ -1,0 +1,217 @@
+---
+title: "Import Rejection Consolidation"
+author: "Vince Egalla"
+date: "11/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Dependencies
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(plyr)
+library(dplyr)
+library(countrycode)
+library(lubridate)
+library(ggplot2)
+#library(extrafont)
+#font_import()
+#library(tabulizer)
+```
+
+## Load Data
+
+```{r}
+## FDA
+fda = read_csv("raw/FDA/Import_Refusal_2014-present/REFUSAL_ENTRY_2014-September2020.CSV")
+```
+
+```{r}
+## USDA - Archived
+usdaArchived = read_excel("raw/USDA/import-refusals-archived.xlsx", skip= 2)
+```
+
+```{r}
+## USDA - Current
+usdaCurrent = read_excel("raw/USDA/import-refusals-current.xlsx", skip= 2)
+```
+
+```{r}
+fsis = read_csv("output/build/fsisSiluriformesWords.csv")
+```
+
+
+## Combine USDA data
+
+```{r}
+## Vertical join of USDA Archived & Current
+usda = rbind(usdaCurrent, usdaArchived)
+```
+
+```{r}
+## Check for duplicates after row bind of Archived & Current
+usda[duplicated(usda),]
+```
+```{r}
+## Check column names
+colnames(usda)
+
+## Update column names
+names(usda)[names(usda) == "AppLot\r\nNumber"] = "app_lot_number"
+names(usda)[names(usda) == "Country"] = "country"
+names(usda)[names(usda) == "Received\r\nLot Date"] = "received_lot_date"
+names(usda)[names(usda) == "Export\r\nEstablishment"] = "export_establishment"
+names(usda)[names(usda) == "Company\r\nName"] = "company_name"
+names(usda)[names(usda) == "HACCP\r\nCode"] = "HACCP_code"
+names(usda)[names(usda) == "Product\r\nCategory"] = "product_category"
+names(usda)[names(usda) == "Species\r\nName"] = "species_name"
+names(usda)[names(usda) == "Final Weight\r\nRefused"] = "final_weight_refused"
+names(usda)[names(usda) == "Refusal\r\nReasons"] = "refusal_reasons"
+names(usda)[names(usda) == "Failed TOI"] = "failed_TOI"
+names(usda)[names(usda) == "Defect\r\nDescriptions"] = "defect_desc"
+```
+
+```{r}
+## Check updated names
+colnames(usda)
+```
+
+```{r}
+#fsis = extract_tables("FSIS/Siluriformes-Fish-Species-FSIS.pdf")
+```
+
+## Flag catfish/pangasius records in both
+
+```{r}
+## FDA Product Description Frequency Table
+fda$PRDCT_CODE_DESC_TEXT = tolower(fda$PRDCT_CODE_DESC_TEXT)
+
+## FDA Product Description Frequency Table
+fdaProducts = as.data.frame(table(fda$PRDCT_CODE_DESC_TEXT))
+```
+
+```{r}
+## Check product categories given keyword searches
+fdaCatfish = fdaProducts[grepl("catfish", fdaProducts$Var1),]
+```
+
+```{r}
+## Check product categories given keyword searches / expand this search to use all common names of siluriformes according to FSIS
+fdaProducts[grepl("pangasius", fdaProducts$Var1),]
+```
+
+```{r}
+## Check product categories given keyword searches / expand this search to use all common names of siluriformes according to FSIS
+fdaProducts[grepl("siluriformes", fdaProducts$Var1),]
+```
+
+```{r}
+## Create flag for Product Descriptions that contains words from the FSIS document
+fsis.words = as.vector(fsis$word)
+pattern = paste(fsis.words, collapse="|")
+
+## Create catfish dummy for FDA data
+fda = mutate(fda, fsis= ifelse(grepl(pattern, fda$PRDCT_CODE_DESC_TEXT), 1, 0))
+
+## Check records flagged with catfish dummy
+fda[fda$fsis == 1,]
+```
+
+```{r}
+## Create catfish dummy for FDA data
+fda = mutate(fda, fsis= ifelse(fda$PRDCT_CODE_DESC_TEXT %in% fsis$word, 1, 0))
+
+## Check records flagged with catfish dummy
+fda[fda$fsis == 1,]
+```
+
+```{r}
+## USDA Species Category Description Frequency Table
+usdaProducts = as.data.frame(table(usda$species_name))
+```
+
+```{r}
+## Check product categories given keyword searches
+usdaCatfish = usdaProducts[grepl("Siluriformes", usdaProducts$Var1),]
+```
+
+```{r}
+## Create catfish dummy for FDA data
+usda = mutate(usda, catfish = ifelse(usda$species_name %in% usdaCatfish$Var1, 1, 0))
+
+## Check records flagged with catfish dummy
+usda[usda$catfish == 1,]
+```
+
+## Standardize date between FDA and USDA
+
+```{r}
+## Check date data type
+typeof(fda$REFUSAL_DATE)
+
+## Convert to numeric
+fda$date = as.Date(fda$REFUSAL_DATE, '%d-%b-%y')
+```
+
+```{r}
+## Check date data type
+typeof(usda$received_lot_date)
+
+## Convert to numeric
+usda$date = as.Date(usda$received_lot_date, '%Y-%m-%d')
+```
+
+## Standardize country between FDA and USDA
+
+```{r}
+## Convert ISO Country Code to Long Name
+fda$country = toupper(countrycode(fda$ISO_CNTRY_CODE, origin= 'iso2c', destination ='country.name'))
+```
+
+## Pre-Merge: Add source and limit to relevant variables
+
+```{r}
+## Specify relevant variables to combine
+fdaVars = c("catfish","date","country", "MFG_FIRM_FEI_NUM", "LGL_NAME", "ENTRY_NUM", "PRDCT_CODE_DESC_TEXT")
+
+## Subset FDA data and add source
+fdaSubset = fda[fdaVars]
+fdaSubset$source = "FDA"
+```
+
+```{r}
+## Specify relevant variables to combine
+usdaVars = c("catfish","date","country", "export_establishment", "company_name" "app_lot_number", "product_category", "species_name")
+
+## Subset FDA data and add source
+usdaSubset = usda[usdaVars]
+usdaSubset$source = "USDA"
+```
+
+## Merge of FDA and USDA data (limited to catfish flag, date, exporting country, and source-specific identifiers of product, company, and entry
+
+```{r}
+## Stack data subsets
+composite = rbind.fill(fdaSubset, usdaSubset)
+
+composite
+```
+
+
+## Export
+
+```{r}
+## Export as RData
+save(composite, file="output/build/compositeImportRefusal.RData")
+```
+
+```{r}
+## Export as CSV
+write.csv(composite, file="output/build/compositeImportRefusal.CSV")
+```
+
