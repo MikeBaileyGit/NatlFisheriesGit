@@ -24,13 +24,13 @@ library(RColorBrewer)
 # Set up
 opts_chunk$set(echo = TRUE)
 options(digits = 3)
-opts_knit$set(root.dir ="~/Desktop/NatlFisheriesGit/2_data/TradeVolume")
+opts_knit$set(root.dir ="~/Desktop/NatlFisheriesGit/2_data")
 
 # Remove objects from the previous session
 rm(list = ls(all = TRUE))
 
 # Load the data set
-dta <- read.csv("monthly_cleaned.csv")
+dta <- read.csv("output/build/monthly_cleaned.csv")
 dta = subset(dta, select = -c(X) )
 dta$year_month <- as.yearmon(paste(dta$year, dta$month), "%Y %B")
 dta = as_tibble(dta)
@@ -78,7 +78,7 @@ ggplot(dta_country,aes(year_month,volume_sum)) +
   theme(plot.title = element_text(face = 'bold'), 
         axis.text.x = element_text(angle = 90, vjust = 0.5))
 
-ggsave('figures/fig1.png',dpi=300)
+ggsave('output/figures/import/fig1.png',dpi=300)
 
 ```
 
@@ -116,7 +116,7 @@ ggplot(dta_vietnam,aes(year_month, volume_sum)) +
   theme(plot.title = element_text(face = 'bold'), 
         axis.text.x = element_text(angle = 90, vjust = 0.5))
 
-ggsave('figures/fig2.png',dpi=300)
+ggsave('output/figures/import/fig2.png',dpi=300)
 
 ```
 
@@ -141,7 +141,7 @@ ggplot(dta_vietnam,aes(year_month, value_sum)) +
   theme(plot.title = element_text(face = 'bold'), 
         axis.text.x = element_text(angle = 90, vjust = 0.5))
 
-ggsave('figures/fig3.png',dpi=300)
+ggsave('output/figures/import/fig3.png',dpi=300)
 
 ```
 
@@ -180,7 +180,7 @@ ggplot(dta_vietnam_season,aes(dategroup, season_volume)) +
   theme_bw() + 
   theme(plot.title = element_text(face = 'bold'))
 
-ggsave('figures/fig4.png',dpi=300)
+ggsave('output/figures/import/fig4.png',dpi=300)
 
 ```
 
@@ -223,7 +223,7 @@ ggplot(dta_vietnam_halfyear,aes(dategroup, halfyear_volume)) +
   theme_bw() + 
   theme(plot.title = element_text(face = 'bold'))
 
-ggsave('figures/fig5.png',dpi=300)
+ggsave('output/figures/import/fig5.png',dpi=300)
 
 ```
 
@@ -266,7 +266,7 @@ ggplot(dta_vietnam_year,aes(dategroup, year_volume)) +
   theme_bw() + 
   theme(plot.title = element_text(face = 'bold'))
 
-ggsave('figures/fig6.png',dpi=300)
+ggsave('output/figures/import/fig6.png',dpi=300)
 
 ```
 
@@ -303,7 +303,7 @@ ggplot(dta_china,aes(year_month, volume_sum)) +
   theme(plot.title = element_text(face = 'bold'), 
         axis.text.x = element_text(angle = 90, vjust = 0.5))
 
-ggsave('figures/fig7.png',dpi=300)
+ggsave('output/figures/import/fig7.png',dpi=300)
 
 ```
 
@@ -353,6 +353,6 @@ ggplot(data = map_subset, mapping = aes(x = long, y = lat, group = group)) +
   plain +
   theme(legend.position="bottom")
 
-ggsave('figures/fig8.png',dpi=300)
+ggsave('output/figures/import/fig8.png',dpi=300)
 
 ```
