@@ -62,7 +62,7 @@ ggplot(monthly, aes(x= category, y= x, group= 1)) +
   ylim(0, 120) +
   geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 120, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
   geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 120, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1) +
-  geom_vline(xintercept= "2019-11", linetype= "dashed", color= "darkred") + annotate("text", x= "2019-12", y= 120, color= "darkred", label= "November 2019\nVietnam gains FSIS\nequivalence", hjust= 0, vjust= 1)
+  geom_vline(xintercept= "2019-11", linetype= "dashed", color= "darkred") + annotate("text", x= "2019-12", y= 120, color= "darkred", label= "November 2019\nVietnam & China \ngain FSIS equivalence", hjust= 0, vjust= 1)
 
 ggsave("output/figures/refusals/monthlyImportRefusalAllCountries.png")
 ```
@@ -107,7 +107,8 @@ ggplot(monthlyChina, aes(x= category, y= x, group= 1)) +
   theme(axis.text.x= element_text(angle= 90, vjust= 0.5)) +
   ylim(0, 120) +
   geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 120, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
-  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 120, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1)
+  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 120, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1) + 
+  geom_vline(xintercept= "2019-11", linetype= "dashed", color= "darkred") + annotate("text", x= "2019-12", y= 120, color= "darkred", label= "November 2019\nChina gains FSIS\nequivalence", hjust= 0, vjust= 1)
 
 ggsave("output/figures/refusals/monthlyImportRefusalChina.png")
 ```
@@ -186,7 +187,8 @@ avgRefusalsPrePostSep2017 =  function(data) {
   deltaAvg = (postAvg - preAvg)/preAvg * 100
   print(paste("The average number of import refusals before September 2017 is ", round(preAvg,2), "."))
   print(paste("The average number of import refusals on and after September 2017 is ", round(postAvg,2), "."))
-  print(paste("After shifting authority to the USDA, the average number of refusals changed by ", round(deltaAvg,2), "%."))
+  if (deltaAvg > 0) {
+  print(paste("After shifting authority to the USDA, the average number of refusals increased by ", round(deltaAvg,2), "%."))}
 }
 
 avgRefusalsPrePostSep2017(monthly)
