@@ -53,8 +53,8 @@ dta %>%
 
 dta_country = dta %>% 
   group_by(year_month, country_name) %>% 
-  summarise(volume_sum = sum(volume_kg)) %>% 
-  filter(country_name %in% c("VIETNAM","CHINA","BRAZIL","PHILIPPINES"))
+  summarise(volume_sum = sum(volume_kg)/1000) %>% 
+  filter(country_name %in% c("VIETNAM","CHINA","PHILIPPINES"))
 
 dta_country
 
@@ -66,17 +66,18 @@ ggplot(dta_country,aes(year_month,volume_sum)) +
   geom_path(aes(color=country_name)) + 
   geom_vline(xintercept = as.yearmon(c('Mar 2016')), 
              color='steelblue4', linetype='dashed') + 
-  annotate('text', x = as.yearmon('Mar 2016'), y = 14500000, 
+  annotate('text', x = as.yearmon('Mar 2016'), y = 14500, 
            label = ' March 2016:\n Inspection responsibility\n transferred from FDA to USDA', 
            size = 3, color = 'steelblue4', hjust = 0) + 
   labs(title = 'Volume of Catfish Imported from Brazil, China, Philippines, and Vietnam by Month from 2012 to 2020', 
-       x = 'Date', y = 'Volume of Catfish Imported (kg)', color = 'Country Name') + 
+       x = 'Date', y = 'Volume of Catfish Imported (thousand kg)', color = 'Country Name') + 
   scale_x_yearmon(breaks = seq(from = min(dta_country$year_month), 
                                to = as.yearmon('Mar 2020'),
                                by = 0.25)) + 
   theme_bw() + 
   theme(plot.title = element_text(face = 'bold'), 
-        axis.text.x = element_text(angle = 90, vjust = 0.5))
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        panel.grid.minor.x = element_blank())
 
 ggsave('output/figures/import/catfish_import_countries.png',dpi=300)
 
@@ -86,8 +87,8 @@ ggsave('output/figures/import/catfish_import_countries.png',dpi=300)
 
 dta_vietnam = dta %>% 
   group_by(year_month, country_name) %>% 
-  summarise(volume_sum = sum(volume_kg),
-            value_sum = sum(value_USD)) %>% 
+  summarise(volume_sum = sum(volume_kg)/1000,
+            value_sum = sum(value_USD)/1000) %>% 
   filter(country_name %in% c("VIETNAM"))
 
 dta_vietnam
@@ -101,20 +102,21 @@ ggplot(dta_vietnam,aes(year_month, volume_sum)) +
   geom_path() + 
   geom_vline(xintercept = as.yearmon(c('Mar 2016','Nov 2019')), 
              color='steelblue4', linetype='dashed') + 
-  annotate('text', x = as.yearmon('Mar 2016'), y = 14500000, 
+  annotate('text', x = as.yearmon('Mar 2016'), y = 14500, 
            label = ' March 2016:\n Inspection responsibility\n transferred from FDA to USDA', 
            size = 3, color = 'steelblue4', hjust = 0) + 
-  annotate('text', x = as.yearmon('Nov 2019'), y = 14500000, 
+  annotate('text', x = as.yearmon('Nov 2019'), y = 14500, 
            label = ' November 2019:\n USDA granted\n equivalence to\n Vietnam', 
            size = 3, color = 'steelblue4', hjust = 0) + 
   labs(title = 'Volume of Catfish Imported from Vietnam by Month from 2012 to 2020', 
-       x = 'Date', y = 'Volume of Catfish Imported from Vietnam (kg)') + 
+       x = 'Date', y = 'Volume of Catfish Imported from Vietnam (thousand kg)') + 
   scale_x_yearmon(breaks = seq(from = min(dta_vietnam$year_month), 
                                to = as.yearmon('Mar 2020'),
                                by = 0.25)) + 
   theme_bw() + 
   theme(plot.title = element_text(face = 'bold'), 
-        axis.text.x = element_text(angle = 90, vjust = 0.5))
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        panel.grid.minor.x = element_blank())
 
 ggsave('output/figures/import/catfish_vietnam_monthly.png',dpi=300)
 
@@ -126,20 +128,21 @@ ggplot(dta_vietnam,aes(year_month, value_sum)) +
   geom_path() + 
   geom_vline(xintercept = as.yearmon(c('Mar 2016','Nov 2019')), 
              color='steelblue4', linetype='dashed') + 
-  annotate('text', x = as.yearmon('Mar 2016'), y = 54500000, 
+  annotate('text', x = as.yearmon('Mar 2016'), y = 54500, 
            label = ' March 2016:\n Inspection responsibility\n transferred from FDA to USDA', 
            size = 3, color = 'steelblue4', hjust = 0) + 
-  annotate('text', x = as.yearmon('Nov 2019'), y = 54500000, 
+  annotate('text', x = as.yearmon('Nov 2019'), y = 54500, 
            label = ' November 2019:\n USDA granted\n equivalence to\n Vietnam', 
            size = 3, color = 'steelblue4', hjust = 0) + 
   labs(title = 'Value of Catfish Imported from Vietnam by Month from 2012 to 2020', 
-       x = 'Date', y = 'Value of Catfish Imported from Vietnam (USD)') + 
+       x = 'Date', y = 'Value of Catfish Imported from Vietnam (thousand USD)') + 
   scale_x_yearmon(breaks = seq(from = min(dta_vietnam$year_month), 
                                to = as.yearmon('Mar 2020'),
                                by = 0.25)) + 
   theme_bw() + 
   theme(plot.title = element_text(face = 'bold'), 
-        axis.text.x = element_text(angle = 90, vjust = 0.5))
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        panel.grid.minor.x = element_blank())
 
 ggsave('output/figures/import/catfish_vietnam_value_monthly.png',dpi=300)
 
@@ -150,8 +153,8 @@ ggsave('output/figures/import/catfish_vietnam_value_monthly.png',dpi=300)
 dta_vietnam_season = dta_vietnam %>% 
   mutate(dategroup = round_date(as.Date(year_month), "3 months")) %>%
   group_by(dategroup) %>%
-  summarise(season_volume = sum(volume_sum),
-            season_value = sum(value_sum))
+  summarise(season_volume = sum(volume_sum)/1000,
+            season_value = sum(value_sum)/1000)
 
 dta_vietnam_season$dategroup = ymd(dta_vietnam_season$dategroup %m+% months(2))
 
@@ -168,17 +171,18 @@ ggplot(dta_vietnam_season,aes(dategroup, season_volume)) +
   geom_path() + 
   geom_vline(xintercept = as.Date(c('2016-03-01','2019-11-05')),
              color='steelblue4', linetype='dashed') +
-  annotate('text', x = as.Date('2016-03-01'), y = 39000000,
+  annotate('text', x = as.Date('2016-03-01'), y = 39,
            label = ' March 2016:\n Inspection responsibility\n transferred from FDA to USDA',
            size = 3, color = 'steelblue4', hjust = 0) +
-  annotate('text', x = as.Date('2019-11-05'), y = 39000000,
+  annotate('text', x = as.Date('2019-11-05'), y = 39,
            label = ' November 2019:\n USDA granted\n equivalence to\n Vietnam',
            size = 3, color = 'steelblue4', hjust = 0) +
-  labs(title = 'Value of Catfish Imported from Vietnam by 3 Months from 2012 to 2020', 
-       x = 'Date', y = 'Value of Catfish Imported from Vietnam (USD)') + 
+  labs(title = 'Volume of Catfish Imported from Vietnam by 3 Months from 2012 to 2020', 
+       x = 'Date', y = 'Volume of Catfish Imported from Vietnam (million kg)') + 
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
   theme_bw() + 
-  theme(plot.title = element_text(face = 'bold'))
+  theme(plot.title = element_text(face = 'bold'),
+        panel.grid.minor.x = element_blank())
 
 ggsave('output/figures/import/catfish_vietnam_3months.png',dpi=300)
 
@@ -193,8 +197,8 @@ dta_vietnam_halfyear$year_month_adjusted = ymd(as.Date(dta_vietnam_halfyear$year
 dta_vietnam_halfyear = dta_vietnam_halfyear %>% 
   mutate(dategroup = ceiling_date(year_month_adjusted, "6 months")) %>%
   group_by(dategroup) %>%
-  summarise(halfyear_volume = sum(volume_sum),
-            halfyear_value = sum(value_sum))
+  summarise(halfyear_volume = sum(volume_sum)/1000,
+            halfyear_value = sum(value_sum)/1000)
 
 dta_vietnam_halfyear$dategroup = ymd(dta_vietnam_halfyear$dategroup %m+% months(2))
 
@@ -217,11 +221,12 @@ ggplot(dta_vietnam_halfyear,aes(dategroup, halfyear_volume)) +
   annotate('text', x = as.Date('2019-11-05'), y = 52000000,
            label = ' November 2019:\n USDA granted\n equivalence to\n Vietnam',
            size = 3, color = 'steelblue4', hjust = 0) +
-  labs(title = 'Value of Catfish Imported from Vietnam by 6 Months from 2012 to 2020', 
-       x = 'Date', y = 'Value of Catfish Imported from Vietnam (USD)') + 
+  labs(title = 'Volume of Catfish Imported from Vietnam by 6 Months from 2012 to 2020', 
+       x = 'Date', y = 'Volume of Catfish Imported from Vietnam (million kg)') + 
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
   theme_bw() + 
-  theme(plot.title = element_text(face = 'bold'))
+  theme(plot.title = element_text(face = 'bold'),
+        panel.grid.minor.x = element_blank())
 
 ggsave('output/figures/import/catfish_vietnam_6months.png',dpi=300)
 
@@ -236,8 +241,8 @@ dta_vietnam_year$year_month_adjusted = ymd(as.Date(dta_vietnam_year$year_month) 
 dta_vietnam_year = dta_vietnam_year %>% 
   mutate(dategroup = ceiling_date(year_month_adjusted, "1 year")) %>%
   group_by(dategroup) %>%
-  summarise(year_volume = sum(volume_sum),
-            year_value = sum(value_sum))
+  summarise(year_volume = sum(volume_sum)/1000,
+            year_value = sum(value_sum)/1000)
 
 dta_vietnam_year$dategroup = ymd(dta_vietnam_year$dategroup %m+% months(2))
 
@@ -254,17 +259,18 @@ ggplot(dta_vietnam_year,aes(dategroup, year_volume)) +
   geom_path() + 
   geom_vline(xintercept = as.Date(c('2016-03-01','2019-11-05')),
              color='steelblue4', linetype='dashed') +
-  annotate('text', x = as.Date('2016-03-01'), y = 102000000,
+  annotate('text', x = as.Date('2016-03-01'), y = 102,
            label = ' March 2016:\n Inspection responsibility\n transferred from FDA to USDA',
            size = 3, color = 'steelblue4', hjust = 0) +
-  annotate('text', x = as.Date('2019-11-05'), y = 102000000,
+  annotate('text', x = as.Date('2019-11-05'), y = 102,
            label = ' November 2019:\n USDA granted\n equivalence to\n Vietnam',
            size = 3, color = 'steelblue4', hjust = 0) +
-  labs(title = 'Value of Catfish Imported from Vietnam by Year from 2012 to 2020', 
-       x = 'Date', y = 'Value of Catfish Imported from Vietnam (USD)') + 
+  labs(title = 'Volume of Catfish Imported from Vietnam by Year from 2012 to 2020', 
+       x = 'Date', y = 'Volume of Catfish Imported from Vietnam (million kg)') + 
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
   theme_bw() + 
-  theme(plot.title = element_text(face = 'bold'))
+  theme(plot.title = element_text(face = 'bold'),
+        panel.grid.minor.x = element_blank())
 
 ggsave('output/figures/import/catfish_vietnam_1year.png',dpi=300)
 
@@ -274,8 +280,8 @@ ggsave('output/figures/import/catfish_vietnam_1year.png',dpi=300)
 
 dta_china = dta %>% 
   group_by(year_month, country_name) %>% 
-  summarise(volume_sum = sum(volume_kg),
-            value_sum = sum(value_USD)) %>% 
+  summarise(volume_sum = sum(volume_kg)/1000,
+            value_sum = sum(value_USD)/1000) %>% 
   filter(country_name %in% c("CHINA"))
 
 dta_china
@@ -288,20 +294,21 @@ ggplot(dta_china,aes(year_month, volume_sum)) +
   geom_path() + 
   geom_vline(xintercept = as.yearmon(c('Mar 2016','Nov 2019')), 
              color='steelblue4', linetype='dashed') + 
-  annotate('text', x = as.yearmon('Mar 2016'), y = 1150000, 
+  annotate('text', x = as.yearmon('Mar 2016'), y = 1150, 
            label = ' March 2016:\n Inspection responsibility\n transferred from FDA to USDA', 
            size = 3, color = 'steelblue4', hjust = 0) + 
-  annotate('text', x = as.yearmon('Nov 2019'), y = 1150000, 
+  annotate('text', x = as.yearmon('Nov 2019'), y = 1150, 
            label = ' November 2019:\n USDA granted\n equivalence to\n China', 
            size = 3, color = 'steelblue4', hjust = 0) + 
   labs(title = 'Volume of Catfish Imported from China by Month from 2012 to 2020', 
-       x = 'Date', y = 'Volume of Catfish Imported from China (kg)') + 
+       x = 'Date', y = 'Volume of Catfish Imported from China (thousand kg)') + 
   scale_x_yearmon(breaks = seq(from = min(dta_china$year_month), 
                                to = as.yearmon('Mar 2020'),
                                by = 0.25)) + 
   theme_bw() + 
   theme(plot.title = element_text(face = 'bold'), 
-        axis.text.x = element_text(angle = 90, vjust = 0.5))
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        panel.grid.minor.x = element_blank())
 
 ggsave('output/figures/import/catfish_china_monthly.png',dpi=300)
 
@@ -311,9 +318,9 @@ ggsave('output/figures/import/catfish_china_monthly.png',dpi=300)
 
 dta_map = dta %>% 
   group_by(country_name) %>% 
-  summarise(volume_sum = sum(volume_kg)) %>% 
+  summarise(volume_sum = sum(volume_kg)/1000) %>% 
   arrange(desc(volume_sum)) %>% 
-  filter(volume_sum > 10000)
+  filter(volume_sum > 10)
   
 
 dta_map$country_name <- tolower(dta_map$country_name)
