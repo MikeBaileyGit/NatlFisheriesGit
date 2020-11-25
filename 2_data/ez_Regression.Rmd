@@ -5,4 +5,110 @@ date: "11/25/2020"
 output: html_document
 ---
 
+## Preparation
+
+```{r setup, include = TRUE, message = FALSE, warning = FALSE}
+
+# Load packages used
+library(knitr)
+library(car)
+library(AER)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(lubridate)
+library(RColorBrewer)
+
+# Set up
+opts_chunk$set(echo = TRUE)
+options(digits = 3)
+opts_knit$set(root.dir ="~/Desktop/NatlFisheriesGit/2_data")
+
+# Remove objects from the previous session
+rm(list = ls(all = TRUE))
+
+```
+
+## Load the data
+
+```{r tidy = FALSE, message = FALSE}
+
+# Load the import data
+import <- read.csv("output/build/monthly_cleaned.csv")
+import = subset(import, select = -c(X))
+import$year_month <- as.yearmon(paste(import$year, import$month), "%Y %B")
+import = as_tibble(import)
+import
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+# Subset to Vietnam
+import_VN = import %>% 
+  group_by(year_month, country_name) %>% 
+  summarise(volume_sum = sum(volume_kg)/1000,
+            value_sum = sum(value_USD)/1000) %>% 
+  filter(country_name %in% c("VIETNAM"))
+
+import_VN
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+# Load the refusal data
+load("output/build/compositeImportRefusal.Rdata")
+refusal = subset(composite, select = -c(catfish))
+refusal = as_tibble(refusal) %>% arrange(date)
+refusal
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+# Subset to Vietnam
+refusal_VN = refusal %>% 
+  mutate(year_month = as.yearmon(date, "%Y %B")) %>%
+  group_by(year_month, country_std) %>%
+  summarise(refusal_count = n()) %>%
+  filter(country_std %in% c("VIETNAM"))
+
+refusal_VN
+
+```
+
+## Merge import and refusal
+
+```{r tidy = FALSE, message = FALSE}
+
+dta = import_VN %>%
+  full_join(refusal_VN, by = "year_month") %>%
+  select(-c(country_std)) %>%
+  mutate(USDA_dummy = ifelse(year_month > as.yearmon("2016-02"), 1, 0),
+         year = year(year_month),
+         month = month(year_month))
+
+dta
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
