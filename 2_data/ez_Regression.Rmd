@@ -20,6 +20,9 @@ library(reshape2)
 library(gridExtra)
 library(lubridate)
 library(RColorBrewer)
+library(jtools)
+library(stargazer)
+library(huxtable)
 
 # Set up
 opts_chunk$set(echo = TRUE)
@@ -95,13 +98,46 @@ dta
 
 ```
 
+## Statistical Analysis
 
+```{r tidy = FALSE, message = FALSE}
 
+OLS1 <- lm(refusal_count ~ USDA_dummy + volume_sum, 
+           data = dta)
 
+summ(OLS1, digits = 3)
 
+```
 
+```{r tidy = FALSE, message = FALSE}
 
+# Create an interaction variable
+dta$USDAxVolume = dta$USDA_dummy * dta$volume_sum
 
+OLS2 <- lm(refusal_count ~ USDA_dummy + volume_sum + USDAxVolume, 
+           data = dta)
+
+summ(OLS2, digits = 3)
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+# Add factor(month)
+OLS3 <- lm(refusal_count ~ USDA_dummy + volume_sum + USDAxVolume + factor(month), 
+           data = dta)
+
+summ(OLS3, digits = 3)
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+export_summs(OLS1, OLS2, OLS3,
+             model.names = c("Model 1","Model 2","Model 3"),
+             digits = 3)
+
+```
 
 
 
