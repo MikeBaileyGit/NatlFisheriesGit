@@ -93,7 +93,8 @@ dta_VN = import_VN %>%
   select(-c(country_std)) %>%
   filter(year_month > as.yearmon("2013-12")) %>%
   filter(year_month < as.yearmon("2020-03")) %>%
-  mutate(USDA_dummy = ifelse(year_month > as.yearmon("2016-02"), 1, 0),
+#  mutate(USDA_dummy = ifelse(year_month > as.yearmon("2016-02"), 1, 0),
+  mutate(USDA_dummy = ifelse(year_month > as.yearmon("2017-08"), 1, 0),
          year = year(year_month),
          month = month(year_month)) %>%
   replace_na(list(refusal_count = 0))
@@ -175,7 +176,8 @@ dta = import_all %>%
   full_join(refusal_all, by = c("year_month","country_name" = "country_std")) %>%
   filter(year_month > as.yearmon("2013-12")) %>%
   filter(year_month < as.yearmon("2020-03")) %>%
-  mutate(USDA_dummy = ifelse(year_month > as.yearmon("2016-02"), 1, 0),
+#  mutate(USDA_dummy = ifelse(year_month > as.yearmon("2016-02"), 1, 0),
+  mutate(USDA_dummy = ifelse(year_month > as.yearmon("2017-08"), 1, 0),
          year = year(year_month),
          month = month(year_month)) %>%
   replace_na(list(refusal_count = 0))
@@ -236,8 +238,90 @@ export_summs(OLS.1, OLS.2, OLS.3, OLS.4,
 
 ```
 
+## Heteroscedasticity-consistent Standard Errors
+
+```{r tidy = FALSE, message = FALSE}
+
+# coeftest(OLS.1, vcov = vcovHC(OLS.1, type = "HC1"))
+# coeftest(OLS.2, vcov = vcovHC(OLS.2, type = "HC1"))
+# coeftest(OLS.3, vcov = vcovHC(OLS.3, type = "HC1"))
+coeftest(OLS.4, vcov = vcovHC(OLS.4, type = "HC1"))
+
+```
+
+## Vietnam, China, Thailand
+
+```{r tidy = FALSE, message = FALSE}
+
+# Subset to Vietnam, China, Thailand
+import_VCT = import %>% 
+  group_by(year_month, country_name) %>% 
+  summarise(volume_sum = sum(volume_kg),
+            value_sum = sum(value_USD)) %>% 
+  filter(country_name %in% c("VIETNAM","CHINA","THAILAND"))
+
+import_VCT
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+# Subset to Vietnam
+refusal_VCT = refusal %>% 
+  mutate(year_month = as.yearmon(date, "%Y %B")) %>%
+  group_by(year_month, country_std) %>%
+  summarise(refusal_count = n()) %>%
+  filter(country_std %in% c("VIETNAM","CHINA","THAILAND"))
+
+refusal_VCT
+
+```
+
+## Merge import and refusal
+
+```{r tidy = FALSE, message = FALSE}
+
+dta_VCT = import_VCT %>%
+  full_join(refusal_VN, by = "year_month") %>%
+  select(-c(country_std)) %>%
+  filter(year_month > as.yearmon("2013-12")) %>%
+  filter(year_month < as.yearmon("2020-03")) %>%
+#  mutate(USDA_dummy = ifelse(year_month > as.yearmon("2016-02"), 1, 0),
+  mutate(USDA_dummy = ifelse(year_month > as.yearmon("2017-08"), 1, 0),
+         year = year(year_month),
+         month = month(year_month)) %>%
+  replace_na(list(refusal_count = 0))
+  
+dta_VCT
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+OLS11 <- lm(refusal_count ~ USDA_dummy + volume_sum, 
+            data = dta_VCT)
+
+# Create an interaction variable
+dta_VCT$USDAxVolume = dta_VCT$USDA_dummy * dta_VCT$volume_sum
+
+OLS22 <- lm(refusal_count ~ USDA_dummy + volume_sum + USDAxVolume, 
+            data = dta_VCT)
+
+# Add factor(month)
+OLS33 <- lm(refusal_count ~ USDA_dummy + volume_sum + USDAxVolume + factor(month), 
+            data = dta_VCT)
+
+# Add factor(country_name)
+OLS44 <- lm(refusal_count ~ USDA_dummy + volume_sum + USDAxVolume + factor(month) + factor(country_name), 
+            data = dta_VCT)
+
+```
 
 
+```{r tidy = FALSE, message = FALSE}
 
+export_summs(OLS11, OLS22, OLS33, OLS44,
+             model.names = c("Model 1","Model 2","Model 3","Model 4"),
+             digits = 3)
 
-
+```
