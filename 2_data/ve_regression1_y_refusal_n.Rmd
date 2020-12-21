@@ -123,6 +123,10 @@ write.csv(monthly, file="output/build/ve_analysis_dataset.CSV")
 ols.1 = lm(total_refusals ~ import_volume + USDA01 + USDAxVolume +  factor(month) + factor(country), data= monthly)
 
 summary(ols.1)
+
+sigma = sigma(ols.1, digits=5)
+
+sigma
 ```
 
 ## Visualization

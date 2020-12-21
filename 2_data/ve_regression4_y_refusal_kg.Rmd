@@ -1,0 +1,146 @@
+---
+title: "Merge Refusals with Import Volume"
+author: "Vince Egalla"
+date: "12/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 3)
+options(scipen=999)
+```
+
+## Dependencies
+
+```{r}
+library(tidyverse)
+library(plyr)
+library(dplyr)
+library(countrycode)
+library(lubridate)
+library(ggplot2)
+```
+
+## Load Data
+```{r}
+## Combined FDA + USDA data
+load("output/build/compositeImportRefusal.Rdata")
+```
+
+```{r}
+## Cleaned import volume data
+import = read.csv("output/build/monthly_cleaned.csv")
+```
+
+## Convert refusal data to monthly
+```{r}
+## Create Year-Month variable for aggregation
+composite$yrmonth = format(as.Date(composite$date),"%Y-%m")
+
+## Aggregate refusal weight to a monthly level
+monthlyRef = setNames(aggregate(composite$refusal_weight, by=list(composite$yrmonth, composite$country_std), FUN= sum), c('yrmonth','country','total_refusal_weight'))
+```
+
+## Convert volume data to monthly
+```{r}
+## Create Year-Month variable for aggregation
+import$yrmonth = format(as.Date(paste(import$year,import$month_number,"01", sep="-")),"%Y-%m")
+
+## Aggregate refusals to a monthly level
+monthlyVol = setNames(aggregate(import$volume_kg, by=list(import$yrmonth, import$country_name), FUN= sum), c('yrmonth','country','import_volume'))
+```
+
+## Merge monthly data
+```{r}
+## Manual conversion of records with import refusal but no import volume for given month-country
+# China - March 2016 -> February 2016
+monthlyRef[monthlyRef$yrmonth == "2016-03" & monthlyRef$country == "CHINA",]
+
+monthlyRef$yrmonth[(monthlyRef$yrmonth == "2016-03" & monthlyRef$country == "CHINA")] = format(as.Date("2016-02-01"),"%Y-%m")
+
+monthlyRef[monthlyRef$yrmonth == "2016-02" & monthlyRef$country == "CHINA",]
+
+# Thailand - January 2018 -> November 2017 (Latest 2017 record)
+monthlyRef[monthlyRef$yrmonth == "2018-01" & monthlyRef$country == "THAILAND",]
+
+monthlyRef$yrmonth[(monthlyRef$yrmonth == "2018-01" & monthlyRef$country == "THAILAND")] = format(as.Date("2017-11-01"),"%Y-%m")
+
+monthlyRef[monthlyRef$yrmonth == "2017-11" & monthlyRef$country == "THAILAND",]
+
+# Thailand - May 2018 -> February 2018 (No other records in 2018)
+monthlyRef[monthlyRef$yrmonth == "2018-05" & monthlyRef$country == "THAILAND",]
+
+monthlyRef$yrmonth[(monthlyRef$yrmonth == "2018-05" & monthlyRef$country == "THAILAND")] = format(as.Date("2018-02-01"),"%Y-%m")
+
+monthlyRef[monthlyRef$yrmonth == "2018-02" & monthlyRef$country == "THAILAND",]
+
+monthlyRef = setNames(aggregate(as.numeric(monthlyRef$total_refusal_weight), by=list(monthlyRef$yrmonth, monthlyRef$country), FUN= sum), c('yrmonth','country','total_refusal_weight'))
+```
+
+```{r}
+# Limit to observations with import volume 
+monthly = merge(x= monthlyRef, y= monthlyVol, by= c('yrmonth','country'), all.y= TRUE, fill= 0)
+
+monthly[is.na(monthly)] = 0
+```
+
+## Checks on merge
+
+## Build Variables for regression analysis
+
+```{r}
+## Month & Year variables
+typeof(monthly$yrmonth)
+monthly$year = format(as.Date(paste(monthly$yrmonth,'-01',sep= '')), '%Y')
+monthly$month = format(as.Date(paste(monthly$yrmonth,'-01',sep = '')), '%m')
+
+typeof(monthly$year)
+
+## Limit data to 2014 (FDA start) to 2020 February (USDA end)
+monthly = monthly[monthly$year >= 2014,]
+monthly = monthly[!(monthly$year == 2020 & !(monthly$month == '01' | monthly$month == '02')),]
+```
+
+## USDA Authority (Dummy)
+```{r}
+## Dummy Variable if month year is in or after September 2017
+monthly$USDA01 = ifelse(((monthly$year == 2017 & (monthly$month == "09" | monthly$month == "10" | monthly$month == "11" | monthly$month == "12")) 
+                         | monthly$year >= 2018), 1, 0)
+
+## Interaction of USDA Authority and Volume
+monthly$USDAxVolume = monthly$USDA01 * monthly$import_volume
+
+## Export as CSV for comparison
+write.csv(monthly, file="output/build/ve_analysis_dataset.CSV")
+```
+
+
+
+## Linear Regression
+```{r}
+## Base Model
+ols.1 = lm(total_refusal_weight ~ import_volume + USDA01 + USDAxVolume +  factor(month) + factor(country), data= monthly)
+
+summary(ols.1)
+```
+
+## Visualization
+```{r}
+monthly$refusalByVolume = monthly$total_refusal_weight / monthly$import_volume
+monthly[is.na(monthly)] = 0
+monthly$relevantCountries = ifelse((monthly$country == "VIETNAM" | monthly$country == "CHINA" | monthly$country == "THAILAND"), monthly$country, "All Other Countries")
+visualize = setNames(aggregate(monthly$refusalByVolume, by=list(monthly$yrmonth, monthly$relevantCountries), FUN= mean), c('yrmonth','country','refusalsByVolume'))
+```
+
+```{r fig.width= 14, fig.height= 6}
+## Monthly refusals over time period (Vietnam)
+ggplot(visualize, aes(x= yrmonth, y= refusalsByVolume, group= country, fill= country)) +
+  geom_line() +
+  labs(x= "Year-Month", y= "Proportion of Refusals by Volume", title= "Catfish Import Refusals Proportion of Volume\nfrom January 2014 to February 2020") +
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))+
+
+  geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 0.01, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 0.01, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2019-11", linetype= "dashed", color= "darkred") + annotate("text", x= "2019-12", y= 0.01, color= "darkred", label= "November 2019\nVietnam gains FSIS\nequivalence", hjust= 0, vjust= 1)
+```

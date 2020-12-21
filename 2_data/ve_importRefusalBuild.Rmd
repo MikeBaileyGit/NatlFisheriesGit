@@ -142,6 +142,17 @@ fda[fda$catfish == 1,]
 ```
 
 ```{r}
+## Create flag for catfish records related to food safety refusal
+pattern2 = "2860|238|249|83|2000|3821|280|308"
+
+fda = mutate(fda, catfish_food_refusal= ifelse(catfish == 1,ifelse(grepl(pattern2, fda$REFUSAL_CHARGES), 1, 0), 0))
+
+## Check records flagged with catfish dummy
+fda[fda$catfish == 1,]
+
+```
+
+```{r}
 ## Create flag for Product Descriptions that contains words from the FSIS document
 fsis.words = as.vector(fsis$word)
 pattern = paste(fsis.words, collapse="|")
@@ -151,11 +162,6 @@ fda = mutate(fda, fsis= ifelse(grepl(pattern, fda$PRDCT_CODE_DESC_TEXT), 1, 0))
 
 ## Check records flagged with catfish dummy
 fda[fda$fsis == 1,]
-```
-
-```{r}
-## Product Descriptions flagged by FSIS indicator
-fdaFSIS = distinct(fda[fda$fsis==1,], PRDCT_CODE_DESC_TEXT)
 ```
 
 
@@ -175,6 +181,16 @@ usda = mutate(usda, catfish = ifelse(usda$species_name %in% usdaCatfish$Var1, 1,
 
 ## Check records flagged with catfish dummy
 usda[usda$catfish == 1,]
+```
+
+```{r}
+## Create flag for catfish records related to food safety refusal
+
+usda = mutate(usda, catfish_food_refusal= ifelse(catfish == 1,ifelse(grepl("Failed Laboratory Analyses", usda$refusal_reasons), 1, 0), 0))
+
+## Check records flagged with catfish dummy
+usda[usda$catfish == 1,]
+
 ```
 
 ## Standardize date between FDA and USDA
@@ -223,28 +239,16 @@ usda$refusal_weight = ifelse(usda$catfish == 1, usda$final_weight_refused / 2.20
 ## Pre-Merge: Add source and limit to relevant variables
 
 ```{r}
-## Specify relevant variables to combine
-fdaVars = c("catfish","date","country_std", "MFG_FIRM_FEI_NUM", "LGL_NAME", "ENTRY_NUM","refusal_weight")
-
-## Subset FDA data and add source
-fdaSubset = fda[fdaVars]
-fdaSubset$source = "FDA"
-```
-
-```{r}
-## Specify relevant variables to combine
-usdaVars = c("catfish","date","country_std", "export_establishment", "company_name", "app_lot_number", "product_category", "species_name", "refusal_weight")
-
-## Subset FDA data and add source
-usdaSubset = usda[usdaVars]
-usdaSubset$source = "USDA"
+## Add data sources
+fda$source = "FDA"
+usda$source = "USDA"
 ```
 
 ## Merge of FDA and USDA data (limited to catfish flag, date, exporting country, and source-specific identifiers of product, company, and entry
 
 ```{r}
 ## Stack data subsets
-composite = rbind.fill(fdaSubset, usdaSubset)
+composite = rbind.fill(fda, usda)
 
 composite
 ```
