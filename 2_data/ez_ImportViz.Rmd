@@ -402,3 +402,64 @@ ggplot(data = map_subset, mapping = aes(x = long, y = lat, group = group)) +
 ggsave('output/figures/import/catfish_import_map.png',dpi=300,bg="transparent")
 
 ```
+
+## 2002-2020
+
+```{r tidy = FALSE, message = FALSE}
+
+dta2 <- read.csv("output/build/monthly_2002.csv")
+dta2 = subset(dta2, select = -c(X))
+dta2$year_month <- as.yearmon(paste(dta2$year, dta$month), "%Y %B")
+dta2 = as_tibble(dta2)
+glimpse(dta2)
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+dta2_vietnam = dta2 %>% 
+  group_by(year_month, country_name) %>% 
+  summarise(volume_sum = sum(volume_kg)/1000,
+            value_sum = sum(value_USD)/1000) %>% 
+  filter(country_name %in% c("VIETNAM"))
+
+dta2_vietnam
+summary(dta2_vietnam)
+
+```
+
+```{r tidy = FALSE, message = FALSE}
+
+dta2_vietnam_year = dta2_vietnam %>% 
+  mutate(dategroup = floor_date(as.Date(year_month), "1 year")) %>%
+  group_by(dategroup) %>%
+  summarise(year_volume = sum(volume_sum)/1000,
+            year_value = sum(value_sum)/1000)
+
+dta2_vietnam_year
+
+```
+
+```{r fig.width = 7, fig.height = 3, message = FALSE}
+
+ggplot(dta2_vietnam_year,aes(dategroup, year_volume)) + 
+  geom_point(size=2) + 
+  geom_path(color="#041E42",size=0.75) + 
+  # geom_vline(xintercept = as.Date(c('2016-03-01','2019-11-05')),
+  #            color='steelblue4', linetype='dashed') +
+  # annotate('text', x = as.Date('2016-03-01'), y = 39,
+  #          label = ' Mar 2016:\n Inspection responsibility\n transferred from FDA to USDA',
+  #          size = 3, color = 'steelblue4', hjust = 0) +
+  # annotate('text', x = as.Date('2019-11-05'), y = 39,
+  #          label = ' Nov 2019:\n USDA granted\n equivalence to\n Vietnam',
+  #          size = 3, color = 'steelblue4', hjust = 0) +
+  labs(title = 'Volume of Catfish Imported from Vietnam by Year from 2002 to 2020', 
+       x = 'Date', y = 'Volume of Catfish Imported from Vietnam (million kg)') + 
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  theme_bw() + 
+  theme(plot.title = element_text(face = 'bold'),
+        panel.grid.minor.x = element_blank())
+
+ggsave('output/figures/import/catfish_vietnam_2002to2020.png',dpi=300)
+
+```
