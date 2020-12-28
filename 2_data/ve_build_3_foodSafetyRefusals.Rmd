@@ -1,0 +1,101 @@
+---
+title: "Merge Food Safety Refusals to Main Data"
+author: "Vince Egalla"
+date: "12/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 3)
+options(scipen=999)
+```
+
+## Dependencies
+
+```{r}
+library(tidyverse)
+library(plyr)
+library(dplyr)
+library(countrycode)
+library(lubridate)
+library(ggplot2)
+library(knitr)
+library(car)
+library(AER)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(lubridate)
+library(RColorBrewer)
+library(jtools)
+library(stargazer)
+library(huxtable)
+```
+
+## Load Data
+```{r}
+## Combined FDA + USDA data
+load("output/build/compositeImportRefusal.Rdata")
+```
+
+```{r}
+## Combined FDA + USDA data
+load("output/build/ve_analysis_dataset.Rdata")
+```
+
+## Convert food safety refusal data to monthly
+```{r}
+## Create Year-Month variable for aggregation
+composite$yrmonth = format(as.Date(composite$date),"%Y-%m")
+
+## Aggregate refusal instances to a monthly level
+monthlyRef = setNames(aggregate(composite$catfish_food_refusal, by=list(composite$yrmonth, composite$country_std), FUN= sum), c('yrmonth','country','fs_refusals'))
+```
+
+
+## Merge monthly data
+```{r}
+## Manual conversion of records with import refusal but no import volume for given month-country
+# China - March 2016 -> February 2016
+monthlyRef[monthlyRef$yrmonth == "2016-03" & monthlyRef$country == "CHINA",]
+
+monthlyRef$yrmonth[(monthlyRef$yrmonth == "2016-03" & monthlyRef$country == "CHINA")] = format(as.Date("2016-02-01"),"%Y-%m")
+
+monthlyRef[monthlyRef$yrmonth == "2016-02" & monthlyRef$country == "CHINA",]
+
+# Thailand - January 2018 -> November 2017 (Latest 2017 record)
+monthlyRef[monthlyRef$yrmonth == "2018-01" & monthlyRef$country == "THAILAND",]
+
+monthlyRef$yrmonth[(monthlyRef$yrmonth == "2018-01" & monthlyRef$country == "THAILAND")] = format(as.Date("2017-11-01"),"%Y-%m")
+
+monthlyRef[monthlyRef$yrmonth == "2017-11" & monthlyRef$country == "THAILAND",]
+
+# Thailand - May 2018 -> February 2018 (No other records in 2018)
+monthlyRef[monthlyRef$yrmonth == "2018-05" & monthlyRef$country == "THAILAND",]
+
+monthlyRef$yrmonth[(monthlyRef$yrmonth == "2018-05" & monthlyRef$country == "THAILAND")] = format(as.Date("2018-02-01"),"%Y-%m")
+
+monthlyRef[monthlyRef$yrmonth == "2018-02" & monthlyRef$country == "THAILAND",]
+
+monthlyRef = setNames(aggregate(as.numeric(monthlyRef$fs_refusals), by=list(monthlyRef$yrmonth, monthlyRef$country), FUN= sum), c('yrmonth','country','fs_refusals'))
+```
+
+```{r}
+# Limit to observations with import volume 
+monthly = merge(x= monthly, y= monthlyRef, by= c('yrmonth','country'), all.x= TRUE, fill= 0)
+
+monthly[is.na(monthly)] = 0
+```
+
+
+```{r}
+## Export as CSV for comparison
+write.csv(monthly, file="output/build/ve_analysis_dataset_2.CSV")
+
+
+## Export as RData
+save(monthly, file="output/build/ve_analysis_dataset_2.RData")
+```
+

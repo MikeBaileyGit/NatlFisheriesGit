@@ -1,0 +1,49 @@
+---
+title: "Merge Refusals with Import Volume"
+author: "Vince Egalla"
+date: "12/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 3)
+options(scipen=999)
+```
+
+## Dependencies
+
+```{r}
+library(tidyverse)
+library(plyr)
+library(dplyr)
+library(countrycode)
+library(lubridate)
+library(ggplot2)
+```
+
+## Load Data
+```{r}
+## Combined FDA + USDA data
+load("output/build/ve_analysis_dataset.Rdata")
+```
+
+## Visualization
+```{r}
+monthly$relevantCountries = ifelse((monthly$country == "VIETNAM" | monthly$country == "CHINA" | monthly$country == "THAILAND"), monthly$country, "All Other Countries")
+visualize = setNames(aggregate(monthly$refusal_weight, by=list(monthly$yrmonth, monthly$relevantCountries), FUN= mean), c('yrmonth','country','refusal_weight'))
+
+visualize = visualize[visualize$yrmonth >= 2015,]
+```
+
+```{r fig.width= 14, fig.height= 6}
+## Monthly refusals over time period (Vietnam)
+ggplot(visualize, aes(x= yrmonth, y= refusal_weight, group= country, fill= country)) +
+  geom_line() +
+  labs(x= "Year-Month", y= "Weight of Refusals (kg)", title= "Weight Catfish Import Refusals Proportion of Volume\nfrom January 2014 to February 2020") +
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))+
+
+  geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 100000, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 100000, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1) +
+  geom_vline(xintercept= "2019-11", linetype= "dashed", color= "darkred") + annotate("text", x= "2019-12", y= 100000, color= "darkred", label= "November 2019\nVietnam gains FSIS\nequivalence", hjust= 0, vjust= 1)
+```

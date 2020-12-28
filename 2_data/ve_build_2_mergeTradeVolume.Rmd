@@ -1,7 +1,7 @@
 ---
 title: "Merge Refusals with Import Volume"
 author: "Vince Egalla"
-date: "12/3/2020"
+date: "12/27/2020"
 output: html_document
 ---
 
@@ -20,6 +20,18 @@ library(dplyr)
 library(countrycode)
 library(lubridate)
 library(ggplot2)
+library(knitr)
+library(car)
+library(AER)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(lubridate)
+library(RColorBrewer)
+library(jtools)
+library(stargazer)
+library(huxtable)
 ```
 
 ## Load Data
@@ -57,7 +69,7 @@ monthlyVol = setNames(aggregate(import$volume_kg, by=list(import$yrmonth, import
 # China - March 2016 -> February 2016
 monthlyRef[monthlyRef$yrmonth == "2016-03" & monthlyRef$country == "CHINA",]
 
-monthlyRef$total_refusals[(monthlyRef$yrmonth == "2016-03" & monthlyRef$country == "CHINA")] = format(as.Date("2016-02-01"),"%Y-%m")
+monthlyRef$yrmonth[(monthlyRef$yrmonth == "2016-03" & monthlyRef$country == "CHINA")] = format(as.Date("2016-02-01"),"%Y-%m")
 
 monthlyRef[monthlyRef$yrmonth == "2016-02" & monthlyRef$country == "CHINA",]
 
@@ -85,7 +97,11 @@ monthly = merge(x= monthlyRef, y= monthlyVol, by= c('yrmonth','country'), all.y=
 monthly[is.na(monthly)] = 0
 ```
 
-## Checks on merge
+## Add alternate scales of trade volume
+```{r}
+monthly$import_volume_100k = monthly$import_volume / 100000
+monthly$import_volume_1M   = monthly$import_volume / 1000000
+```
 
 ## Build Variables for regression analysis
 
@@ -104,47 +120,23 @@ monthly = monthly[!(monthly$year == 2020 & !(monthly$month == '01' | monthly$mon
 
 ## USDA Authority (Dummy)
 ```{r}
-## Dummy Variable if month year is in or after September 2017
-monthly$USDA01 = ifelse(((monthly$year == 2017 & (monthly$month == "09" | monthly$month == "10" | monthly$month == "11" | monthly$month == "12")) 
-                         | monthly$year >= 2018), 1, 0)
+monthly = monthly %>%
+  mutate(USDA_transition01 = ifelse((yrmonth >= as.yearmon("2016-03")) & (yrmonth < as.yearmon("2017-09")), 1, 0),
+         USDA01 = ifelse(yrmonth > as.yearmon("2017-08"), 1, 0))
+
 
 ## Interaction of USDA Authority and Volume
 monthly$USDAxVolume = monthly$USDA01 * monthly$import_volume
+monthly$USDAxVolume100k = monthly$USDA01 * monthly$import_volume_100k
+monthly$USDAxVolume1M = monthly$USDA01 * monthly$import_volume_1M
+```
 
+```{r}
 ## Export as CSV for comparison
 write.csv(monthly, file="output/build/ve_analysis_dataset.CSV")
+
+
+## Export as RData
+save(monthly, file="output/build/ve_analysis_dataset.RData")
 ```
 
-
-
-## Linear Regression
-```{r}
-## Base Model
-ols.1 = lm(total_refusals ~ import_volume + USDA01 + USDAxVolume +  factor(month) + factor(country), data= monthly)
-
-summary(ols.1)
-
-sigma = sigma(ols.1, digits=5)
-
-sigma
-```
-
-## Visualization
-```{r}
-monthly$refusalByVolume = monthly$total_refusals / monthly$import_volume
-monthly[is.na(monthly)] = 0
-monthly$relevantCountries = ifelse((monthly$country == "VIETNAM" | monthly$country == "CHINA" | monthly$country == "THAILAND"), monthly$country, "All Other Countries")
-visualize = setNames(aggregate(monthly$refusalByVolume, by=list(monthly$yrmonth, monthly$relevantCountries), FUN= mean), c('yrmonth','country','refusalsByVolume'))
-```
-
-```{r fig.width= 14, fig.height= 6}
-## Monthly refusals over time period (Vietnam)
-ggplot(visualize, aes(x= yrmonth, y= refusalsByVolume, group= country, fill= country)) +
-  geom_line() +
-  labs(x= "Year-Month", y= "Proportion of Refusals by Volume", title= "Catfish Import Refusals Proportion of Volume\nfrom January 2014 to February 2020") +
-  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))+
-
-  geom_vline(xintercept= "2016-03", linetype= "dashed", color= "darkred") + annotate("text", x= "2016-04", y= 0.01, color= "darkred", label= "March 2016\nRegulatory power shifts to USDA", hjust= 0, vjust= 1) +
-  geom_vline(xintercept= "2017-09", linetype= "dashed", color= "darkred") + annotate("text", x= "2017-10", y= 0.01, color= "darkred", label= "September 2017\n18 month transition period ends", hjust= 0, vjust= 1) +
-  geom_vline(xintercept= "2019-11", linetype= "dashed", color= "darkred") + annotate("text", x= "2019-12", y= 0.01, color= "darkred", label= "November 2019\nVietnam gains FSIS\nequivalence", hjust= 0, vjust= 1)
-```

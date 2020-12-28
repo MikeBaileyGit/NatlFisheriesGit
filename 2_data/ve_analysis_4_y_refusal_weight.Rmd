@@ -1,0 +1,38 @@
+---
+title: "Model 4: Total Refusal Weight Explained by Base Specification"
+author: "Vince Egalla"
+date: "12/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 3)
+options(scipen=999)
+```
+
+## Dependencies
+
+```{r}
+library(ggplot2)
+```
+
+## Load Data
+```{r}
+## Combined FDA + USDA data
+load("output/build/ve_analysis_dataset_3.Rdata")
+```
+
+```{r}
+monthly$refusal_weight_1M = monthly$refusal_weight / 1000000
+```
+
+## Linear Regression
+```{r}
+## Base Model
+ols.4 = lm(refusal_weight_1M ~  USDA01 + USDA_transition01 + import_volume_1M + USDAxVolume1M +  factor(month) + factor(country), data= monthly)
+
+summary(ols.4)
+
+save(ols.4, file="output/analysis/ve_analysis_4_ols.RData")
+```

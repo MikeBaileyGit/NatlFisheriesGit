@@ -1,0 +1,38 @@
+---
+title: "Regression 1 - USDA Authority Only"
+author: "Vince Egalla"
+date: "12/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 3)
+options(scipen=999)
+```
+
+## Dependencies
+
+```{r}
+library(stargazer)
+```
+
+## Load Data
+```{r}
+## Combined FDA + USDA data
+load("output/build/ve_analysis_dataset.Rdata")
+```
+
+## Linear Regression
+```{r}
+## Base Model
+ols.1 = lm(total_refusals ~ USDA01, data= monthly)
+
+summary(ols.1)
+
+save(ols.1, file="output/analysis/ve_analysis_1_ols.RData")
+```
+```{r}
+stargazer(ols.1, title="Results", align=TRUE)
+
+```

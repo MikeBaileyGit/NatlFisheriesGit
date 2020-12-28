@@ -1,0 +1,35 @@
+---
+title: "Model 3: Refusals Explained by Base Specification"
+author: "Vince Egalla"
+date: "12/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 3)
+options(scipen=999)
+```
+
+## Dependencies
+
+```{r}
+```
+
+## Load Data
+```{r}
+## Combined FDA + USDA data
+load("output/build/ve_analysis_dataset.Rdata")
+```
+
+
+
+## Linear Regression
+```{r}
+## Base Model
+ols.2 = lm(total_refusals ~  USDA01 + USDA_transition01 + import_volume_1M + USDAxVolume1M +  factor(month) + factor(country), data= monthly)
+
+summary(ols.2)
+
+save(ols.2, file="output/analysis/ve_analysis_2_ols.RData")
+```
