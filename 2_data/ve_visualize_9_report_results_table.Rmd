@@ -1,0 +1,67 @@
+---
+title: "Report - Statistical Results Table"
+author: "Vince Egalla"
+date: "12/30/2020"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Dependencies
+
+```{r}
+library(tidyverse)
+library(plyr)
+library(dplyr)
+library(countrycode)
+library(lubridate)
+library(ggplot2)
+#library(extrafont)
+#font_import()
+#library(tabulizer)
+```
+
+## Load Data
+## Findings
+\begin{table}[]
+\centering
+\caption{}
+\label{tab:NFI}
+\begin{tabular}{|l|c|c|c|}
+\hline & \multicolumn{ 1 }{ c }{ (1) } & \multicolumn{ 1 }{ c }{ (2) } & \multicolumn{ 1 }{ c }{ (3) } \\ 
+\hline
+\hline
+USDA Authority          & 11.45$^{***}$ & 3.27$^{**}$  & -0.63$^{**}$            \\
+                        & (1.74)        & (1.15)       & (0.19)               \\
+                        & $[t = 6.57]$  &$[t = 2.84]$  &$[t = -3.27]$          \\[4.5pt]
+Transition Period       &               & 1.43         & 0.02                 \\
+                        &               & (0.78)       & (0.18)                \\
+                        &               &$[t = 1.86]$  &$[t = 0.14]$          \\[4.5pt]
+Import Volume under FDA &               & -0.29        & -0.01             \\
+(million kg)            &               & (0.81)       & (0.04)                \\
+                        &               &$[t = -0.35]$ &$[t = -0.34]$           \\[4.5pt]
+Import Volume under USDA&               & 2.40$^{***}$ & 0.07$^{**}$            \\
+(million kg)            &               & (0.27)       & (0.02)                \\
+                        &               &$[t = 8.85]$  &$[t = 2.81]$          \\[4.5pt]
+Monthly                 &               &              &                       \\
+Fixed Effects           &               &              &                       \\
+                        &               &              &                       \\[4.5pt]
+Country                 &               &              &                       \\
+Fixed Effect            &               &              &                       \\
+                        &               &              &                       \\[4.5pt]
+Constant                & 0.63$^{**}$   & 2.07         & 1.10                \\
+                        & (0.19)        & (1.64)       & (1.11)              \\
+                        &$[t = 3.31]$   &$[t = 1.26]$  &$[t = 0.99]$            \\[4.5pt]
+$N$                     & 262           & 262          & 262                  \\[4.5pt]
+$\hat{\sigma}$          & 8.32          & 6.21         & 0.89                   \\[4.5pt]
+$Adjusted R^2$          & 0.278         & 0.598        & 0.080                  \\ 
+\hline
+\multicolumn{4}{l}{\footnotesize{Standard errors in parentheses}}\\
+\multicolumn{4}{l}{\footnotesize{$^*$ indicates significance at $p< 0.05 $}}\\
+\multicolumn{4}{l}{\footnotesize{$^{**}$ indicates significance at $p< 0.01 $}}\\ 
+\multicolumn{4}{l}{\footnotesize{$^{***}$ indicates significance at $p< 0.001 $}}\\ 
+\end{tabular}
+\end{table}

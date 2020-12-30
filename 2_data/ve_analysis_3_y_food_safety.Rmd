@@ -36,6 +36,8 @@ summary(ols.3)
 save(ols.3, file="output/analysis/ve_analysis_3_ols.RData")
 
 coeftest(ols.3, vcov = vcovHC(ols.3, type="HC1"))
+
+sigma(ols.3)
 ```
 ```{r}
 ## Base Model
