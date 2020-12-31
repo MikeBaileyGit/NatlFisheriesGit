@@ -51,7 +51,7 @@ ggplot(result, aes(x= model, y= usda_coef, fill= model)) +
   geom_bar(stat= "identity", legend= FALSE) + 
   labs(x= "", y= "", fill= "") + 
   theme_bw() +
-  theme(legend.position = "none") +
+  scale_x_discrete(labels = c("Total Refusals\nby USDA only", "Total Refusals\nby USDA and controls", "Food Safety Refusals\nby USDA and controls")) +
   ylim(-2,12) + 
   geom_hline(yintercept= 0, color= "black") +
   scale_fill_manual(values=bluePalette)

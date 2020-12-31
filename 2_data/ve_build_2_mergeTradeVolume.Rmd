@@ -129,6 +129,17 @@ monthly = monthly %>%
 monthly$USDAxVolume = monthly$USDA01 * monthly$import_volume
 monthly$USDAxVolume100k = monthly$USDA01 * monthly$import_volume_100k
 monthly$USDAxVolume1M = monthly$USDA01 * monthly$import_volume_1M
+
+monthly$USDA_t01xVolume1M = monthly$USDA_transition01 * monthly$import_volume_1M
+
+```
+
+```{r}
+monthly = monthly %>%
+  mutate(country_cat = ifelse(((country == "VIETNAM") | (country == "CHINA") | (country == "THAILAND")), country, "ROW"))
+
+monthly$country_cat <- factor(monthly$country_cat, levels = c("ROW","VIETNAM", "CHINA", "THAILAND"))
+
 ```
 
 ```{r}

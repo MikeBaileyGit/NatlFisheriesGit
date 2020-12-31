@@ -90,6 +90,8 @@ monthly[is.na(monthly)] = 0
 ```
 
 
+
+
 ```{r}
 ## Export as CSV for comparison
 write.csv(monthly, file="output/build/ve_analysis_dataset_3.CSV")

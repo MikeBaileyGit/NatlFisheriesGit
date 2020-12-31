@@ -30,7 +30,7 @@ load("output/build/ve_analysis_dataset.Rdata")
 ## Linear Regression
 ```{r}
 ## Base Model
-ols.2 = lm(total_refusals ~  USDA01 + USDA_transition01 + import_volume_1M + USDAxVolume1M +  factor(month) + factor(country), data= monthly)
+ols.2 = lm(total_refusals ~  USDA01 + USDA_transition01 + import_volume_1M + USDAxVolume1M + USDA_t01xVolume1M +  factor(month) + factor(country_cat), data= monthly)
 
 summary(ols.2)
 
